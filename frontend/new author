@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Author Management</title>
+  <link rel="stylesheet" href="style.css"> <!-- Link to CSS file -->
+</head>
+<body>
+
+  <h1>Manage Authors</h1>
+
+  <!-- Form to add a new author -->
+  <form id="add-author-form">
+    <label for="lastname">Last Name:</label>
+    <input type="text" id="lastname" name="lastname" required><br><br>
+
+    <label for="firstname">First Name:</label>
+    <input type="text" id="firstname" name="firstname" required><br><br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="researcher_type">Researcher Type:</label>
+    <select id="researcher_type" name="researcher_type" required>
+      <option value="student">Student</option>
+      <option value="faculty">Faculty</option>
+    </select><br><br>
+
+    <button type="submit">Add Author</button>
+  </form>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="app.js"></script> <!-- Link to JS file for functionality -->
+
+</body>
+</html>

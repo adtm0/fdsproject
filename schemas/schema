@@ -1,0 +1,44 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Reference to Supabase Auth user
+    lastname TEXT NOT NULL,
+    firstname TEXT NOT NULL,
+    middle_initial TEXT, -- Middle initial (optional)
+    contact_no TEXT NOT NULL, -- Contact number
+    role TEXT NOT NULL, -- User role (admin, staff, etc.)
+    email TEXT NOT NULL UNIQUE -- User email for login (managed by Supabase Auth)
+);
+
+CREATE TABLE departments (
+    id SERIAL PRIMARY KEY,
+    department_name TEXT NOT NULL,
+    building_no TEXT NOT NULL,
+    department_head TEXT NOT NULL
+);
+
+CREATE TABLE authors (
+    id SERIAL PRIMARY KEY,
+    lastname TEXT NOT NULL,
+    firstname TEXT NOT NULL,
+    middle_initial TEXT, -- Middle initial (optional)
+    email TEXT NOT NULL UNIQUE,
+    researcher_type TEXT CHECK (researcher_type IN ('student', 'faculty')) NOT NULL, -- Type of researcher
+    student_type TEXT CHECK (student_type IN ('undergraduate', 'graduate')), -- Type of student (only if researcher_type = 'student')
+    department_id INT REFERENCES departments(id) ON DELETE SET NULL -- Reference to department
+);
+
+CREATE TABLE research_papers (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    publication_date DATE NOT NULL,
+    status TEXT CHECK (status IN ('draft', 'submitted', 'published')) NOT NULL, -- Paper status
+    abstract TEXT, -- Abstract of the paper
+    author_ids TEXT[] NOT NULL, -- List of author IDs (references authors table)
+    department_id INT REFERENCES departments(id) ON DELETE SET NULL -- Department associated with the paper
+);
+
+CREATE TABLE users_researchers (
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Reference to users
+    researcher_id INT REFERENCES authors(id) ON DELETE CASCADE, -- Reference to authors
+    PRIMARY KEY (user_id, researcher_id)
+);

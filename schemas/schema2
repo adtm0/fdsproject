@@ -1,0 +1,52 @@
+-- Ensure pgcrypto extension is enabled (for UUID generation if you need it)
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Users Table (Incremental ID)
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY, -- Incremental primary key
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Reference to Supabase Auth user
+    lastname TEXT NOT NULL,
+    firstname TEXT NOT NULL,
+    middle_initial TEXT, -- Middle initial (optional)
+    contact_no TEXT NOT NULL, -- Contact number
+    role TEXT NOT NULL, -- User role (admin, staff, etc.)
+    email TEXT NOT NULL UNIQUE -- User email for login (managed by Supabase Auth)
+);
+
+-- Departments Table (Incremental ID)
+CREATE TABLE departments (
+    id SERIAL PRIMARY KEY, -- Incremental primary key
+    department_name TEXT NOT NULL,
+    building_no TEXT NOT NULL,
+    department_head TEXT NOT NULL
+);
+
+-- Authors Table (Incremental ID, Foreign Key to Department)
+CREATE TABLE authors (
+    id SERIAL PRIMARY KEY, -- Incremental primary key
+    lastname TEXT NOT NULL,
+    firstname TEXT NOT NULL,
+    middle_initial TEXT, -- Middle initial (optional)
+    email TEXT NOT NULL UNIQUE,
+    researcher_type TEXT CHECK (researcher_type IN ('student', 'faculty')) NOT NULL, -- Type of researcher
+    student_type TEXT CHECK (student_type IN ('undergraduate', 'graduate')), -- Type of student (only if researcher_type = 'student')
+    department_id INT REFERENCES departments(id) ON DELETE SET NULL -- Reference to department
+);
+
+-- Research Papers Table (UUID Primary Key, Foreign Key to Department and Authors)
+CREATE TABLE research_papers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- UUID Primary Key for research papers
+    title TEXT NOT NULL,
+    publication_date DATE NOT NULL,
+    status TEXT CHECK (status IN ('draft', 'submitted', 'published')) NOT NULL, -- Paper status
+    abstract TEXT, -- Abstract of the paper
+    author_ids INT[] NOT NULL, -- List of author IDs (references authors table using INT)
+    department_id INT REFERENCES departments(id) ON DELETE SET NULL -- Department associated with the paper
+);
+
+-- Users-Researchers Table (Linking Users to Researchers via Incremental IDs)
+CREATE TABLE users_researchers (
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Reference to users
+    researcher_id INT REFERENCES authors(id) ON DELETE CASCADE, -- Reference to authors (using INT for authors)
+    PRIMARY KEY (user_id, researcher_id)
+);

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Management System</title>
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Research Management System</h1>
+    <h1>Add New Author</h1>
+    <form id="add-author-form">
+        <input type="text" id="lastname" placeholder="Last Name" required>
+        <input type="text" id="firstname" placeholder="First Name" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <select id="researcher_type" required>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+        </select>
+        <button type="submit">Add Author</button>
+    </form>
+
+    <h2>
+        Authors List
+        <input type="text" id="search-bar" placeholder="Search authors..." oninput="searchAuthors()">
+        <select id="sort-select" onchange="sortAuthors()">
+            <option value="lastname">Sort by Last Name</option>
+            <option value="firstname">Sort by First Name</option>
+            <option value="researcher_type">Sort by Researcher Type</option>
+        </select>        
+    </h2>
+    <div id="authors-list"></div>
+    <button onclick="deleteSelected()">Delete Selected</button>
+
+    <!-- Edit Author Form -->
+    <h2>Edit Author</h2>
+    <form id="edit-author-form" style="display: none;">
+        <input type="text" id="edit-firstname" placeholder="First Name" required>
+        <input type="text" id="edit-lastname" placeholder="Last Name" required>
+        <input type="email" id="edit-email" placeholder="Email" required>
+        <select id="edit-researcher_type" required>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+        </select>
+        <button type="submit">Update Author</button>
+    </form>
+
+    <script>
+        const form = document.getElementById('add-author-form');
+        const editForm = document.getElementById('edit-author-form');
+
+        // Handle form submission for adding a new author
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const lastname = document.getElementById('lastname').value;
+            const firstname = document.getElementById('firstname').value;
+            const email = document.getElementById('email').value;
+            const researcher_type = document.getElementById('researcher_type').value;
+
+            const response = await fetch('http://localhost:3000/add-author', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lastname, firstname, email, researcher_type })
+            });
+
+            if (response.ok) {
+                alert('Author added successfully!');
+                form.reset(); // Reset the form
+                fetchAuthors(); // Reload the authors list
+            } else {
+                alert('Failed to add author.');
+            }
+        });
+
+        // Fetch all authors from the backend
+        async function fetchAuthors() {
+            try {
+                const response = await fetch('http://localhost:3000/authors');
+                const authors = await response.json();
+                const authorsListDiv = document.getElementById('authors-list');
+                authorsListDiv.innerHTML = '';
+
+                if (authors.length === 0) {
+                    authorsListDiv.innerHTML = '<p>No authors found</p>';
+                    return;
+                }
+
+                authors.forEach((author) => {
+                    const authorDiv = document.createElement('div');
+                    authorDiv.innerHTML = `
+                        <p>${author.firstname} ${author.lastname}</p>
+                        <p>Email: ${author.email}</p>
+                        <p>Researcher Type: ${author.researcher_type}</p>
+                        <button onclick="editAuthor(${author.id})">Edit</button>
+                        <button onclick="deleteAuthor(${author.id})">Delete</button>
+                        <hr>
+                    `;
+                    authorsListDiv.appendChild(authorDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching authors:', error);
+                document.getElementById('authors-list').innerHTML = '<p>Error loading authors.</p>';
+            }
+        }
+
+        async function searchAuthors() {
+            const searchQuery = document.getElementById('search-bar').value.toLowerCase();
+          
+            try {
+              const response = await fetch('http://localhost:3000/authors');
+              const authors = await response.json();
+              const authorsListDiv = document.getElementById('authors-list');
+              authorsListDiv.innerHTML = '';
+          
+              const filteredAuthors = authors.filter((author) => {
+                return (
+                  author.firstname.toLowerCase().includes(searchQuery) ||
+                  author.lastname.toLowerCase().includes(searchQuery) ||
+                  author.email.toLowerCase().includes(searchQuery) ||
+                  author.researcher_type.toLowerCase().includes(searchQuery)
+                );
+              });
+          
+              filteredAuthors.forEach((author) => {
+                const authorDiv = document.createElement('div');
+                authorDiv.innerHTML = `
+                  <p>${author.firstname} ${author.lastname}</p>
+                  <p>Email: ${author.email}</p>
+                  <p>Researcher Type: ${author.researcher_type}</p>
+                  <button onclick="editAuthor(${author.id})">Edit</button>
+                  <button onclick="deleteAuthor(${author.id})">Delete</button>
+                  <hr>
+                `;
+                authorsListDiv.appendChild(authorDiv);
+              });
+            } catch (error) {
+              console.error('Error fetching authors:', error);
+              document.getElementById('authors-list').innerHTML = '<p>Error loading authors.</p>';
+            }
+          }
+
+        async function sortAuthors() {
+        const sortBy = document.getElementById('sort-select').value;
+        
+        try {
+            const response = await fetch('http://localhost:3000/authors');
+            const authors = await response.json();
+            authors.sort((a, b) => {
+            if (a[sortBy] < b[sortBy]) return -1;
+            if (a[sortBy] > b[sortBy]) return 1;
+            return 0;
+            });
+        
+            displayAuthors(authors); // This function will display the authors after sorting
+        } catch (error) {
+            console.error('Error fetching authors:', error);
+        }
+        }
+        
+        function displayAuthors(authors) {
+        const authorsListDiv = document.getElementById('authors-list');
+        authorsListDiv.innerHTML = '';
+        
+        authors.forEach((author) => {
+            const authorDiv = document.createElement('div');
+            authorDiv.innerHTML = `
+            <p>${author.firstname} ${author.lastname}</p>
+            <p>Email: ${author.email}</p>
+            <p>Researcher Type: ${author.researcher_type}</p>
+            <button onclick="editAuthor(${author.id})">Edit</button>
+            <button onclick="deleteAuthor(${author.id})">Delete</button>
+            <hr>
+            `;
+            authorsListDiv.appendChild(authorDiv);
+        });
+        }
+            
+        // Function to handle editing an author
+        async function editAuthor(id) {
+            try {
+                const response = await fetch(`http://localhost:3000/authors/${id}`);
+                const author = await response.json();
+                
+                // Populate the edit form fields with the author's data
+                document.getElementById('edit-firstname').value = author.firstname;
+                document.getElementById('edit-lastname').value = author.lastname;
+                document.getElementById('edit-email').value = author.email;
+                document.getElementById('edit-researcher_type').value = author.researcher_type;
+
+                // Show the edit form
+                editForm.style.display = 'block';
+
+                // Handle the submit of the edit form
+                editForm.onsubmit = (event) => updateAuthor(event, id);
+            } catch (error) {
+                console.error('Error editing author:', error);
+            }
+        }
+
+        // Function to update an author
+        async function updateAuthor(event, id) {
+            event.preventDefault();
+
+            const firstname = document.getElementById('edit-firstname').value;
+            const lastname = document.getElementById('edit-lastname').value;
+            const email = document.getElementById('edit-email').value;
+            const researcher_type = document.getElementById('edit-researcher_type').value;
+
+            const response = await fetch(`http://localhost:3000/update-author/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstname, lastname, email, researcher_type }),
+            });
+
+            if (response.ok) {
+                alert('Author updated successfully');
+                fetchAuthors(); // Reload the authors list
+                editForm.style.display = 'none'; // Hide the edit form
+            } else {
+                alert('Failed to update author');
+            }
+        }
+
+        // Delete an author
+        async function deleteAuthor(id) {
+            const confirmation = confirm('Are you sure you want to delete this author?');
+            if (!confirmation) return;
+            
+            try {
+                const response = await fetch(`http://localhost:3000/delete-author/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    alert('Author deleted successfully');
+                    fetchAuthors(); // Reload the authors list
+                } else {
+                    alert('Failed to delete author');
+                }
+            } catch (error) {
+                console.error('Error deleting author:', error);
+            }
+        }
+
+        // Initial fetch to display authors
+        fetchAuthors();
+    </script>
+</body>
+</html>
